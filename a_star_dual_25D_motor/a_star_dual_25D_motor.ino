@@ -1,11 +1,6 @@
-#include <low_pass_filter.h>
-#include <PinChangeInt.h>
-#include <PinChangeIntConfig.h>
+#include "dc_motor.h"
+#include "low_pass_filter.h"
 
-#define encA1 1
-#define encB1 0
-#define encA2 3
-#define encB2 2
 #define encA1_int 3
 #define encB1_int 2
 #define encA2_int 0
@@ -15,16 +10,6 @@ LPFilter lpfilter1, lpfilter2;
 
 volatile long motor_pos1, motor_pos2 = 0;
 unsigned volatile long last_trig1, t_trig1, dt1;
-
-uint8_t led_pin = 13;
-uint8_t inA1 = 5;
-uint8_t inB1 = 4;
-uint8_t inA2 = 6;
-uint8_t inB2 = 7;
-uint8_t pwm1 = 10;
-uint8_t pwm2 = 9;
-uint8_t c_sense1 = A1;
-uint8_t c_sense2 = A0;
 
 int activate_state, last_activate_state = 0;
 
@@ -44,32 +29,20 @@ float vel1, vel2;
 
 uint16_t t_start = 0;
 
+DCMotor *motor1 = new DCMotor(5, 4, 10, A1, 1, 0, 1000);
+DCMotor *motor2 = new DCMotor(6, 7, 9, A0, 3, 2, 1000);
+
 boolean off = true;
 
 void setup() {
   Serial.begin(9600);
   Serial.println("started...");
   
-  pinMode(led_pin, OUTPUT); 
-  pinMode(inA1, OUTPUT);
-  pinMode(inB1, OUTPUT);
-  pinMode(inA2, OUTPUT);
-  pinMode(inB2, OUTPUT);
-  pinMode(pwm1, OUTPUT);
-  pinMode(pwm2, OUTPUT);
-
-  pinMode(encA1, INPUT);
-  pinMode(encB1, INPUT);
-  pinMode(encA2, INPUT);
-  pinMode(encB2, INPUT);
-  pinMode(c_sense1, INPUT);
-  pinMode(c_sense2, INPUT);
-  
   attachInterrupt(encA1_int, encA1trig, CHANGE);
   attachInterrupt(encA2_int, encA2trig, CHANGE);
   
-  lpfilter1.init(2.5, measureCurrentInt1());
-  lpfilter2.init(2.5, measureCurrentInt2());
+  motor1->init();
+  motor2->init();
 }
 
 void loop() {
@@ -99,7 +72,6 @@ void loop() {
   sum_error = constrain(sum_error,-10000,10000);
   motor_pwr2 = 0.05*int(dt1-1000) + 0.01*sum_error;
   
-  driveMotor(1,constrain(motor_pwr2,0,255));
 
   // Serial output for debugging
   Serial.print("M1: ");
@@ -183,97 +155,10 @@ void loop() {
 //  }
 }
 
-void driveMotor(uint8_t which_motor, float pwr) {
-  uint8_t m_pwm = constrain(abs(pwr),0,max_pwm);
-  int dir = sgn(int(pwr));
-  switch(which_motor) {
-    case 1:
-      if (dir > 0) {
-        digitalWrite(inA1, HIGH);
-        digitalWrite(inB1, LOW);
-      } else if (dir < 0) {
-        digitalWrite(inA1, LOW);
-        digitalWrite(inB1, HIGH);
-      } else {
-        digitalWrite(inA1, HIGH);
-        digitalWrite(inB1, HIGH);
-      }
-      analogWrite(pwm1, m_pwm);
-    break;
-    case 2:
-      if (dir > 0) {
-        digitalWrite(inA2, HIGH);
-        digitalWrite(inB2, LOW);
-      } else if (dir < 0) {
-        digitalWrite(inA2, LOW);
-        digitalWrite(inB2, HIGH);
-      } else {
-        digitalWrite(inA2, HIGH);
-        digitalWrite(inB2, HIGH);
-      }
-      analogWrite(pwm2, m_pwm);
-    break;
-  }
-}
-
-static inline int8_t sgn(int val) {
-  if (val < 0) return -1;
-  if (val==0) return 0;
-  return 1;
-}
-
-float measureCurrent1() {
-  // 140mV/A
-  return (analogRead(c_sense1)*0.03491); //adc to A
-}
-
-uint16_t measureCurrentInt1() {
-  return analogRead(c_sense1);
-}
-
-
-float measureCurrent2() {
-  // 140mV/A
-  return (analogRead(c_sense2)*0.03491); //adc to A
-}
-
-uint16_t measureCurrentInt2() {
-  return analogRead(c_sense2);
-}
-
 void encA1trig() {
-  if (digitalRead(encA1) == HIGH) {
-    if (digitalRead(encB1) == LOW) {
-      motor_pos1++;
-    } else {
-      motor_pos1--;
-    }
-  } else {
-    if (digitalRead(encB1) == LOW) {
-      motor_pos1--;
-    } else {
-      motor_pos1++;
-    }
-  }
-  
-//  if (dt1 > 1000) { dt1 = 1000; }
+  motor1->interruptRoutineA();
 }
 
 void encA2trig() {
-  if (digitalRead(encA2) == HIGH) {
-    if (digitalRead(encB2) == LOW) {
-      motor_pos2++;
-    } else {
-      motor_pos2--;
-    }
-  } else {
-    if (digitalRead(encB2) == LOW) {
-      motor_pos2--;
-    } else {
-      motor_pos2++;
-    }
-  }
-  last_trig1 = t_trig1;
-  t_trig1 = micros();
-  dt1 = t_trig1 - last_trig1;
+  motor2->interruptRoutineA();
 }
