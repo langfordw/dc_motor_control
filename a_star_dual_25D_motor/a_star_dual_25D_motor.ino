@@ -24,21 +24,26 @@ void setup() {
   motor2->setPWMLimit(255); // given nominal 6v motor with 6V power supply
   motor2->setPolarity(0);
   
-  motor1->setPIDGains(0.8,0.2,10.0); // velocity control
-  motor1->setDesiredVelocity(500); //counts/sec
+//  motor1->setPIDGains(1.5,0.0,0.0); // velocity control
+//  motor1->setDesiredVelocity(200); //counts/sec
 
-//  motor1->setPIDGains(5.,0.5,200.0); // position control
-//  motor1->setPIDGains(0,0,500.); // pure damper
-//  motor1->setDesiredPosition(0);
+//  motor1->setPIDGains(25.,0.0,100.0); // position control
+  motor1->setPIDGains(0,0,500.); // pure damper
+  motor1->setDesiredPosition(0);
 }
 
 void loop() {
-//  motor1->setDesiredPosition(24*sin(millis()/1000.));
+//  motor1->setDesiredPosition(32*sin(millis()/1000.));
+//  long target_pos = 1000*(millis()/1000.);
+//  motor1->setDesiredPosition(target_pos);
   Serial.print("M1: ");
+//  Serial.print(target_pos);
+//  Serial.print(", ");
   Serial.print(motor1->getPosition());
   Serial.print(", ");
   Serial.print(motor1->calculateVelocity());
-  motor1->update();
+//  motor1->update();
+  motor1->drive(50);
   Serial.println();
 //  motor2->update();
 //  motor1->drive(255);

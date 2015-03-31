@@ -48,8 +48,8 @@ class DCMotor
     int _max_pwm;
     long _delta_T, _last_t_enc_triggered;
     int  _counts_per_revolution;
-    LPFilter *_currentFilter, *_pwmFilter;
-    float _f_cs_smoothing, _f_pwm_smoothing;
+    LPFilter *_currentFilter, *_pwmFilter, *_velocityFilter;
+    float _f_cs_smoothing, _f_pwm_smoothing, _f_vel_smoothing;
     int8_t _sgn(int val);
     int8_t _polarity;
     float _k_p, _k_i, _k_d;
@@ -57,6 +57,8 @@ class DCMotor
     volatile boolean _enc_trig_flag;
     int _last_trig;
     int8_t _dir;
+    long _last_time, _time;
+    long _last_position, _delta_pos;
 };
 
 #endif

@@ -31,7 +31,10 @@ DCMotor::DCMotor(byte dir_pin1, byte dir_pin2, byte pwm_pin, byte current_sense_
   _f_cs_smoothing = 2.5; //Hz
   
   _pwmFilter = new LPFilter();
-  _f_pwm_smoothing = 0.5; //Hz
+  _f_pwm_smoothing = 10000; //Hz
+  
+  _velocityFilter = new LPFilter();
+  _f_vel_smoothing = 10; //Hz
   
   _polarity = 0;
   
@@ -68,6 +71,7 @@ void DCMotor::init()
   
   _currentFilter->init(_f_cs_smoothing, this->_measureCurrent());
   _pwmFilter->init(_f_pwm_smoothing, 0);
+  _velocityFilter->init(_f_vel_smoothing, 0);
 }
 
 void DCMotor::setCurrentLimit(float current_limit)
@@ -99,8 +103,8 @@ long DCMotor::getPosition()
 
 void DCMotor::update()
 {
-  this->_velocityControl();
-//  this->_positionControl();
+//  this->_velocityControl();
+  this->_positionControl();
 }
 
 void DCMotor::_velocityControl()
@@ -127,7 +131,8 @@ void DCMotor::_positionControl()
   _sum_error += _error;
   _sum_error = constrain(_sum_error, -1000, 1000); // TODO WHAT'S REASONABLE WINDUP LIMIT?
   int pwr = _pwmFilter->step(int(_k_p * _error + _k_i * _sum_error + _k_d * _delta_error));
-//  Serial.println(_sum_error);
+  Serial.print(", ");
+  Serial.print(pwr);
   drive(pwr);
 }
 
@@ -188,13 +193,23 @@ float DCMotor::calculateVelocity()
 //      _velocity = 0;
 //    }
 //  }
-  _delta_T = _t_enc_triggered-_last_t_enc_triggered;
-  if (_delta_T > 0) _velocity = 1000000/_delta_T; // counts/sec
-  _velocity = constrain(_velocity,0,3200); // determined experimentally by spinnning motor at full power
+
+  _time = micros();
+  _delta_T = _time-_last_time;
+  _last_time = _time;
+  
+  _delta_pos = _position-_last_position;
+  _last_position = _position;
+  
+  _velocity = _velocityFilter->step(_delta_pos*1000000/_delta_T);
+
+//  _delta_T = _t_enc_triggered-_last_t_enc_triggered;
+//  if (_delta_T > 0) _velocity = 1000000/_delta_T; // counts/sec
+//  _velocity = constrain(_velocity,0,3200); // determined experimentally by spinnning motor at full power
   // max no load velocity = 3000.00 @ 6V, 255 pwm (about .145A current drawn from power supply)
   // = 5800 rpm
   // 32 counts/rev
-  if (_dir < 0) _velocity*=_dir;
+//  if (_dir < 0) _velocity*=_dir;
   return _velocity;
 }
 
