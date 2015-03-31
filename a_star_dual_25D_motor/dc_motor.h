@@ -31,8 +31,9 @@ class DCMotor
     void interruptRoutineA();
     void interruptRoutineB();
     void setPolarity(int8_t polarity);
-    void setPIDGains(int p, int i, int d);
+    void setPIDGains(float p, float i, float d);
     void setDesiredVelocity(float desired_velocity);
+    void setDesiredPosition(long desired_position);
     long getPosition();
   private:
     byte _dir_pin1, _dir_pin2, _pwm_pin, _current_sense_pin, _encA_pin, _encB_pin;
@@ -41,19 +42,21 @@ class DCMotor
     long _desired_position;
     float _velocity, _desired_velocity;
     float _current, _current_limit, _current_sensitivity;
-    float _f_cs_smoothing;
+    void _velocityControl(), _positionControl();
     float _desired_current;
     unsigned volatile long _t_enc_triggered;
     int _max_pwm;
     long _delta_T, _last_t_enc_triggered;
     int  _counts_per_revolution;
-    LPFilter *_currentFilter;
+    LPFilter *_currentFilter, *_pwmFilter;
+    float _f_cs_smoothing, _f_pwm_smoothing;
     int8_t _sgn(int val);
     int8_t _polarity;
-    int _k_p, _k_i, _k_d;
+    float _k_p, _k_i, _k_d;
     float _error, _sum_error, _last_error, _delta_error;
     volatile boolean _enc_trig_flag;
     int _last_trig;
+    int8_t _dir;
 };
 
 #endif

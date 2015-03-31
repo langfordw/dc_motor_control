@@ -5,8 +5,8 @@
 #define encA2_int 2
 #define encB2_int 3
 
-DCMotor *motor1 = new DCMotor(5, 4, 10, A1, 3, 2, 1000); //dir_pin1, dir_pin2, pwm_pin, current_sense_pin, encA_pin, encB_pin, counts_per_revolution
-DCMotor *motor2 = new DCMotor(6, 7, 9, A0, 0, 1, 1000);
+DCMotor *motor1 = new DCMotor(5, 4, 10, A1, 3, 2, 32); //dir_pin1, dir_pin2, pwm_pin, current_sense_pin, encA_pin, encB_pin, counts_per_revolution
+DCMotor *motor2 = new DCMotor(6, 7, 9, A0, 0, 1, 32);
 
 void setup() {
   Serial.begin(9600);
@@ -24,17 +24,25 @@ void setup() {
   motor2->setPWMLimit(255); // given nominal 6v motor with 6V power supply
   motor2->setPolarity(0);
   
-//  motor1->setDesiredVelocity(10); //rpm
+  motor1->setPIDGains(0.8,0.2,10.0); // velocity control
+  motor1->setDesiredVelocity(500); //counts/sec
+
+//  motor1->setPIDGains(5.,0.5,200.0); // position control
+//  motor1->setPIDGains(0,0,500.); // pure damper
+//  motor1->setDesiredPosition(0);
 }
 
 void loop() {
-//  motor1->update();
-//  motor2->update();
-  motor1->drive(25);
+//  motor1->setDesiredPosition(24*sin(millis()/1000.));
   Serial.print("M1: ");
   Serial.print(motor1->getPosition());
   Serial.print(", ");
-  Serial.println(motor1->calculateVelocity());
+  Serial.print(motor1->calculateVelocity());
+  motor1->update();
+  Serial.println();
+//  motor2->update();
+//  motor1->drive(255);
+  
 //  Serial.print("   M2: ");
 //  Serial.println(motor2->getPosition());
 }
