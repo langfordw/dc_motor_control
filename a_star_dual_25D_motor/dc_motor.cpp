@@ -8,9 +8,11 @@ DCMotor::DCMotor(byte dir_pin1, byte dir_pin2, byte pwm_pin, byte current_sense_
 {
   _dir_pin1 = dir_pin1;
   _dir_pin2 = dir_pin2;
+  _pwm_pin = pwm_pin;
   _current_sense_pin = current_sense_pin;
   _encA_pin = encA_pin;
   _encB_pin = encB_pin;
+  _enc_trig_flag = false;
   
   _position = 0;
   _desired_position = _position;
@@ -38,6 +40,7 @@ void DCMotor::init()
 {
   pinMode(_dir_pin1, OUTPUT);
   pinMode(_dir_pin2, OUTPUT);
+  pinMode(_pwm_pin, OUTPUT);
   pinMode(_current_sense_pin, INPUT);
   pinMode(_encA_pin, INPUT);
   pinMode(_encB_pin, INPUT);   
@@ -68,6 +71,11 @@ void DCMotor::setPIDGains(int p, int i, int d)
 float DCMotor::_measureCurrent() 
 {
   return analogRead(_current_sense_pin)*_current_sensitivity; 
+}
+
+long DCMotor::getPosition()
+{
+  return _position;
 }
 
 void DCMotor::update()
@@ -115,14 +123,29 @@ void DCMotor::drive(int power)
     digitalWrite(_dir_pin1, LOW);
     digitalWrite(_dir_pin2, LOW);
   }
-  analogWrite(_pwm_pin, constrain(abs(power),0,_max_pwm));
+  uint8_t pwr = constrain(abs(power),0,_max_pwm);
+  analogWrite(_pwm_pin, pwr);
 }
 
 float DCMotor::calculateVelocity()
 {
-  _delta_T = _t_enc_triggered-_last_t_enc_triggered;
-  _velocity = 60000000/_delta_T/_counts_per_revolution; // rpm
-  _velocity = constrain(_velocity,0,500); //TODO.... WHAT'S A REASONABLE MAX VELOCITY?
+  // TO DO: add timeout for velocity = 0?
+  if (_enc_trig_flag) {
+    // encoder triggered
+    _delta_T = _t_enc_triggered-_last_t_enc_triggered;
+    if (_delta_T > 0) _velocity = 1000000/_delta_T; // counts/sec
+    _enc_trig_flag = false;
+    _last_trig = millis();
+  } else {
+    // no encoder tick, are we stopped?
+    if (millis()-_last_trig > 100) { // 100 --> mininum measurable speed = 10 counts/sec
+      _velocity = 0;
+    }
+  }
+  
+  _velocity = constrain(_velocity,0,3200); // determined experimentally by spinnning motor at full power
+  // max no load velocity = 3000.00 @ 6V, 255 pwm (about .145A current drawn from power supply)
+  
   return _velocity;
 }
 
@@ -136,13 +159,17 @@ void DCMotor::interruptRoutineA()
     else { _position++; }
   }
   
+  _last_t_enc_triggered = _t_enc_triggered;
   _t_enc_triggered = micros();
+  _enc_trig_flag = true;
 }
 
 void DCMotor::interruptRoutineB()
 {
   // todo: figure out gray code for properly incrementing position after being triggered by encB
+  _last_t_enc_triggered = _t_enc_triggered;
   _t_enc_triggered = micros();
+  _enc_trig_flag = true;
 }
 
 int8_t DCMotor::_sgn(int val) {

@@ -33,6 +33,7 @@ class DCMotor
     void setPolarity(int8_t polarity);
     void setPIDGains(int p, int i, int d);
     void setDesiredVelocity(float desired_velocity);
+    long getPosition();
   private:
     byte _dir_pin1, _dir_pin2, _pwm_pin, _current_sense_pin, _encA_pin, _encB_pin;
     float _measureCurrent();
@@ -51,6 +52,8 @@ class DCMotor
     int8_t _polarity;
     int _k_p, _k_i, _k_d;
     float _error, _sum_error, _last_error, _delta_error;
+    volatile boolean _enc_trig_flag;
+    int _last_trig;
 };
 
 #endif
