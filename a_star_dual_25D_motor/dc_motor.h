@@ -25,11 +25,14 @@ class DCMotor
     void init();
     void setCurrentLimit(float current_limit);
     void setPWMLimit(int max_pwm);
-    
+    void drive(int power);
     float calculateVelocity();
     void update();
     void interruptRoutineA();
     void interruptRoutineB();
+    void setPolarity(int8_t polarity);
+    void setPIDGains(int p, int i, int d);
+    void setDesiredVelocity(float desired_velocity);
   private:
     byte _dir_pin1, _dir_pin2, _pwm_pin, _current_sense_pin, _encA_pin, _encB_pin;
     float _measureCurrent();
@@ -44,6 +47,10 @@ class DCMotor
     long _delta_T, _last_t_enc_triggered;
     int  _counts_per_revolution;
     LPFilter *_currentFilter;
+    int8_t _sgn(int val);
+    int8_t _polarity;
+    int _k_p, _k_i, _k_d;
+    float _error, _sum_error, _last_error, _delta_error;
 };
 
 #endif
