@@ -114,7 +114,7 @@ void DCMotor::_velocityControl()
   _error = _desired_velocity-_velocity;
   _delta_error = _error-_last_error;
   _sum_error += _error;
-  _sum_error = constrain(_sum_error, -100, 100); // TODO WHAT'S REASONABLE WINDUP LIMIT?
+  _sum_error = constrain(_sum_error, -100, 100);
   float pwr = _pwmFilter->step(_k_p * _error + _k_i * _sum_error + _k_d * _delta_error);
   if (_desired_velocity >= 0) { pwr = constrain(pwr,0,255); }
   else { pwr = constrain(pwr,-255,0); }
@@ -129,7 +129,7 @@ void DCMotor::_positionControl()
   _error = _desired_position-_position;
   _delta_error = _error-_last_error;
   _sum_error += _error;
-  _sum_error = constrain(_sum_error, -1000, 1000); // TODO WHAT'S REASONABLE WINDUP LIMIT?
+  _sum_error = constrain(_sum_error, -1000, 1000);
   int pwr = _pwmFilter->step(int(_k_p * _error + _k_i * _sum_error + _k_d * _delta_error));
   Serial.print(", ");
   Serial.print(pwr);
@@ -194,6 +194,7 @@ float DCMotor::calculateVelocity()
 //    }
 //  }
 
+  // DELTA_POS METHOD
   _time = micros();
   _delta_T = _time-_last_time;
   _last_time = _time;
@@ -203,6 +204,7 @@ float DCMotor::calculateVelocity()
   
   _velocity = _velocityFilter->step(_delta_pos*1000000/_delta_T);
 
+  // DELTA_T METHOD
 //  _delta_T = _t_enc_triggered-_last_t_enc_triggered;
 //  if (_delta_T > 0) _velocity = 1000000/_delta_T; // counts/sec
 //  _velocity = constrain(_velocity,0,3200); // determined experimentally by spinnning motor at full power
@@ -210,6 +212,7 @@ float DCMotor::calculateVelocity()
   // = 5800 rpm
   // 32 counts/rev
 //  if (_dir < 0) _velocity*=_dir;
+
   return _velocity;
 }
 

@@ -37,8 +37,6 @@ void loop() {
 //  long target_pos = 1000*(millis()/1000.);
 //  motor1->setDesiredPosition(target_pos);
   Serial.print("M1: ");
-//  Serial.print(target_pos);
-//  Serial.print(", ");
   Serial.print(motor1->getPosition());
   Serial.print(", ");
   Serial.print(motor1->calculateVelocity());
