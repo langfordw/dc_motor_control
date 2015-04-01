@@ -2,58 +2,57 @@
 
 #define encA1_int 0
 #define encB1_int 1
-#define encA2_int 2
-#define encB2_int 3
+#define step_int 2
+#define dir_int 3
 
 DCMotor *motor1 = new DCMotor(5, 4, 10, A1, 3, 2, 32); //dir_pin1, dir_pin2, pwm_pin, current_sense_pin, encA_pin, encB_pin, counts_per_revolution
-DCMotor *motor2 = new DCMotor(6, 7, 9, A0, 0, 1, 32);
+
+int step_pin = 0;
+int dir_pin = 1;
+
+volatile long desired_position;
 
 void setup() {
   Serial.begin(9600);
   
   attachInterrupt(encA1_int, encA1trig, CHANGE);
-  attachInterrupt(encA2_int, encA2trig, CHANGE);
+  attachInterrupt(step_int, stepTrig, RISING);
+  
+  pinMode(step_pin, INPUT);
+  digitalWrite(step_pin, HIGH);
+  pinMode(dir_pin, INPUT);
+  digitalWrite(dir_pin, HIGH);
   
   motor1->init();
   motor1->setCurrentLimit(0.8); // amps
   motor1->setPWMLimit(255); // given nominal 6v motor with 6V power supply
   motor1->setPolarity(0);
-  
-  motor2->init();
-  motor2->setCurrentLimit(0.8); // amps
-  motor2->setPWMLimit(255); // given nominal 6v motor with 6V power supply
-  motor2->setPolarity(0);
-  
-//  motor1->setPIDGains(1.5,0.0,0.0); // velocity control
-//  motor1->setDesiredVelocity(200); //counts/sec
 
-//  motor1->setPIDGains(25.,0.0,100.0); // position control
-  motor1->setPIDGains(0,0,500.); // pure damper
+  motor1->setPIDGains(10.,0.01,10.0); // position control, good for moderate speeds
+  motor1->setPIDGains(50.,0.001,500.0); // position control, good for holding stationary
   motor1->setDesiredPosition(0);
 }
 
 void loop() {
-//  motor1->setDesiredPosition(32*sin(millis()/1000.));
-//  long target_pos = 1000*(millis()/1000.);
-//  motor1->setDesiredPosition(target_pos);
+  motor1->setDesiredPosition(desired_position);
   Serial.print("M1: ");
+  Serial.print(desired_position);
+  Serial.print(", ");
   Serial.print(motor1->getPosition());
   Serial.print(", ");
   Serial.print(motor1->calculateVelocity());
-//  motor1->update();
-  motor1->drive(50);
+  motor1->update();
   Serial.println();
-//  motor2->update();
-//  motor1->drive(255);
-  
-//  Serial.print("   M2: ");
-//  Serial.println(motor2->getPosition());
 }
 
 void encA1trig() {
   motor1->interruptRoutineA();
 }
 
-void encA2trig() {
-  motor2->interruptRoutineA();
+void stepTrig() {
+  if (digitalRead(dir_pin)) {
+    desired_position++;
+  } else {
+    desired_position--;
+  }
 }
