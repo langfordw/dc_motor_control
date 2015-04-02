@@ -38,7 +38,7 @@ void setup() {
 
 void loop() {
   // Gain Scheduling Test
-  // update gains relative to velocity
+  // update gains relative to test velocity
   float vel_raw = motor1->calculateVelocity();
   vel = vel*alpha + (1-alpha)*vel_raw;
   float p = (50-vel*40/1000.);
