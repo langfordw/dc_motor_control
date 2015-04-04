@@ -43,11 +43,6 @@ void loop() {
 //  motor1->update();
   motor1->drive(50);
   Serial.println();
-//  motor2->update();
-//  motor1->drive(255);
-  
-//  Serial.print("   M2: ");
-//  Serial.println(motor2->getPosition());
 }
 
 void encA1trig() {
