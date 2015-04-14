@@ -18,36 +18,16 @@ void setup() {
   motor1->setCurrentLimit(0.8); // amps
   motor1->setPWMLimit(255); // given nominal 6v motor with 6V power supply
   motor1->setPolarity(1);
-  
-//  motor2->init();
-//  motor2->setCurrentLimit(0.8); // amps
-//  motor2->setPWMLimit(255); // given nominal 6v motor with 6V power supply
-//  motor2->setPolarity(0);
-  
-//  motor1->setPIDGains(1.5,0.0,0.0); // velocity control
-//  motor1->setDesiredVelocity(2000); //counts/sec
 
   motor1->setPIDGains(2,0.00,0); // position control
-//  motor1->setPIDGains(0,0,500.); // pure damper
-//  motor1->setDesiredPosition(0);
   motor1->setDesiredForce(40);
 }
 
 void loop() {
-//  motor1->setDesiredPosition(10000*sin(millis()/1000.));
-//  long target_pos = 5000*(millis()/1000.);
-//  motor1->setDesiredPosition(target_pos);
   Serial.print("M1: ");
   Serial.print(motor1->measureForce());
-//  Serial.print(", ");
-//  Serial.print(motor1->calculateVelocity());
   motor1->update();
-//  motor1->drive(255);
   Serial.println();
-}
-
-int readTensionGauge() {
-  return analogRead(A7);
 }
 
 void encA1trig() {
