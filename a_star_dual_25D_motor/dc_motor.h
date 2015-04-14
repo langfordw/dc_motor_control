@@ -18,6 +18,7 @@
 
 #include "low_pass_filter.h"
 
+
 class DCMotor
 {
   public:
@@ -34,15 +35,18 @@ class DCMotor
     void setPIDGains(float p, float i, float d);
     void setDesiredVelocity(float desired_velocity);
     void setDesiredPosition(long desired_position);
+    void setDesiredForce(int desired_force);
     long getPosition();
+    int measureForce();
   private:
-    byte _dir_pin1, _dir_pin2, _pwm_pin, _current_sense_pin, _encA_pin, _encB_pin;
+    byte _dir_pin1, _dir_pin2, _pwm_pin, _current_sense_pin, _encA_pin, _encB_pin, _force_sense_pin;
     float _measureCurrent();
     volatile long _position;
     long _desired_position;
+    int _desired_force;
     float _velocity, _desired_velocity;
     float _current, _current_limit, _current_sensitivity;
-    void _velocityControl(), _positionControl();
+    void _velocityControl(), _positionControl(), _forceControl();
     float _desired_current;
     unsigned volatile long _t_enc_triggered;
     int _max_pwm;
