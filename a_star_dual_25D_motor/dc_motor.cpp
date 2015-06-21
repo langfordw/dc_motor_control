@@ -113,8 +113,8 @@ int DCMotor::measureForce()
 void DCMotor::update()
 {
 //  this->_velocityControl();
-//  this->_positionControl();
-  this->_forceControl();
+  this->_positionControl();
+//  this->_forceControl();
 }
 
 void DCMotor::_velocityControl()
