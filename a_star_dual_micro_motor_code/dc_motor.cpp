@@ -115,12 +115,39 @@ int DCMotor::measureForce()
   return analogRead(_force_sense_pin);
 }
 
+void DCMotor::setControlType(byte control_type)
+{
+  // 0 = current
+  // 1 = position
+  _control_type = control_type;
+}
+
 void DCMotor::update()
+{
+  switch (_control_type) {
+    case 0:
+      this->_currentControl();
+    break;
+    case 1:
+      this->_positionControl();
+    break;
+  }
+}
+
+void DCMotor::updateCurrentControl()
 {
 //  this->_velocityControl();
 //  this->_positionControl();
 //  this->_forceControl();
   this->_currentControl();
+}
+
+void DCMotor::updatePositionControl()
+{
+//  this->_velocityControl();
+  this->_positionControl();
+//  this->_forceControl();
+//  this->_currentControl();
 }
 
 void DCMotor::_velocityControl()
@@ -147,6 +174,7 @@ void DCMotor::_positionControl()
   _sum_error += _error;
   _sum_error = constrain(_sum_error, -1000, 1000);
   int pwr = _pwmFilter->step(int(_k_p * _error + _k_i * _sum_error + _k_d * _delta_error));
+  Serial.print(_position);
   Serial.print(", ");
   Serial.print(pwr);
   drive(pwr);
@@ -178,8 +206,7 @@ void DCMotor::_currentControl()
   _sum_error += _error;
   _sum_error = constrain(_sum_error, -100, 100);
   int pwr = int(_k_p * _error);
-  Serial.print(", ");
-  Serial.print(_error);
+  Serial.print(_position);
   Serial.print(", ");
   Serial.print(pwr);
   drive(pwr);
@@ -208,6 +235,11 @@ void DCMotor::setDesiredCurrent(float desired_current)
 void DCMotor::setPolarity(int8_t polarity)
 {
   _polarity = polarity;
+}
+
+void DCMotor::setZero()
+{
+  _position = 0;
 }
 
 void DCMotor::drive(int power)

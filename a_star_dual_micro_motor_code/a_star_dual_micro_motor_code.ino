@@ -1,4 +1,5 @@
 #include "dc_motor.h"
+#include "stapler.h"
 
 // BE SURE TO SET THE CORRECT INTERRUPT CORRESPONDING TO THE DIGITAL PIN OF THE ENCODER
 #define encA1_int 0
@@ -13,6 +14,8 @@ DCMotor *motor2 = new DCMotor(4, 12, 9, A0, 1, 0, 10);
 // Drive values < 0 --> piston moves down, encoder decrements
 // Drive values > 0 --> piston moves up, encoder increments
 
+Stapler *stapler1 = new Stapler();
+
 byte state = 0;
 const byte startup = 1;
 const byte up = 2;
@@ -24,6 +27,8 @@ byte activate_pin2 = 8;
 byte led_pin = 13;
 
 long tstart = 0;
+
+int pos = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -42,36 +47,94 @@ void setup() {
   motor2->setPolarity(1);
 
   motor1->setPIDGains(20.0,1.0,0); // current control
-  
-  motor1->setDesiredCurrent(-0.7);
+  motor1->setDesiredCurrent(-0.6);
+  motor1->setControlType(0);
   tstart = millis();
   state = startup;
 }
 
 void loop() {
   if (Serial.available() > 0) {
-    if (Serial.read() == 's') {
-      state = off;
-    }
-    if (Serial.read() == 'g') {
+    byte inByte = Serial.read();
+    if (inByte == 'q') {
+      motor1->setPIDGains(2.0,0.03,0); // position control
+      motor1->setDesiredPosition(100);
+      motor1->setControlType(1);
+      tstart = millis();
+      state = up;
+      Serial.print("UP");
+      Serial.println(tstart);
+    } else if (inByte == 'a') {
+      motor1->setPIDGains(2.0,0.03,0); // position control
+      motor1->setDesiredPosition(0);
+      motor1->setControlType(1);
+      tstart = millis();
+      state = down;
+      Serial.print("DOWN");
+    } else if (inByte == '1') {
+      motor1->setPIDGains(20.0,1.0,0); // current control
+      motor1->setDesiredCurrent(-0.7);
+      motor1->setControlType(0);
+      tstart = millis();
       state = startup;
-      digitalWrite(led_pin, HIGH);
+      Serial.print("STARTUP");
+    } else if (inByte == 'z') {
+      state = off;
+      Serial.print("OFF");
+    }
+    
+    if (inByte == 'w') {
+      motor2->setPIDGains(2.0,0.03,0); // position control
+      motor2->setDesiredPosition(100);
+      motor2->setControlType(1);
+      tstart = millis();
+      state = up;
+      Serial.print("UP");
+      Serial.println(tstart);
+    } else if (inByte == 's') {
+      motor1->setPIDGains(2.0,0.03,0); // position control
+      motor1->setDesiredPosition(0);
+      motor1->setControlType(1);
+      tstart = millis();
+      state = down;
+      Serial.print("DOWN");
+    } else if (inByte == '2') {
+      motor1->setPIDGains(20.0,1.0,0); // current control
+      motor1->setDesiredCurrent(-0.7);
+      motor1->setControlType(0);
+      tstart = millis();
+      state = startup;
+      Serial.print("STARTUP");
+    } else if (inByte == 'x') {
+      state = off;
+      Serial.print("OFF");
     }
   }
   
   switch (state) {
     case startup:
       motor1->update();
-      if ((millis() - tstart) > 1000) { state = off; }
+      Serial.println();
+      if ((millis() - tstart) > 1000) {
+        motor1->setZero(); 
+        state = off; 
+      }
     break;
     case up:
+      moveFromAtoB(motor1->getPosition(),2000,tstart,tstart+2000);
+      motor1->update();
+      Serial.println();
+      if ((millis() - tstart) > 2000) { state = off; }
     break;
     case down:
+      moveFromAtoB(motor1->getPosition(),0,tstart,tstart+2000);
+      motor1->update();
+      Serial.println();
+      if ((millis() - tstart) > 2000) { state = off; }
     break;
     case off:
       motor1->drive(0);
       motor2->drive(0);
-      Serial.print("off");
     break;
   }
   
@@ -99,7 +162,14 @@ void loop() {
 //  } else {
 //    motor1->drive(0);
 //  }
-    Serial.println();
+//    Serial.println();
+}
+
+void moveFromAtoB(long a, long b, long tstart, long tend) {
+  float alpha = float((millis()-tstart))/float((tend-tstart)); // 0 --> 1
+  int pos = alpha*b + (1-alpha)*a; //a --> b
+  motor1->setDesiredPosition(pos);
+  Serial.println(alpha);
 }
 
 void encA1trig() {

@@ -28,7 +28,7 @@ class DCMotor
     void setPWMLimit(int max_pwm);
     void drive(int power);
     float calculateVelocity();
-    void update();
+    void update(), updatePositionControl(), updateCurrentControl();
     void interruptRoutineA();
     void interruptRoutineB();
     void setPolarity(int8_t polarity);
@@ -37,6 +37,8 @@ class DCMotor
     void setDesiredPosition(long desired_position);
     void setDesiredForce(int desired_force);
     void setDesiredCurrent(float desired_current);
+    void setControlType(byte control_type);
+    void setZero();
     long getPosition();
     float getCurrent();
     int measureForce();
@@ -65,6 +67,7 @@ class DCMotor
     int8_t _dir;
     long _last_time, _time;
     long _last_position, _delta_pos;
+    byte _control_type;
 };
 
 #endif
