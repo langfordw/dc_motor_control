@@ -169,7 +169,11 @@ void DCMotor::_forceControl()
 
 void DCMotor::_currentControl()
 {
-  _current = _measureCurrent();
+  if (_desired_current > 0) {
+    _current = _measureCurrent();
+  } else {
+    _current = -_measureCurrent();
+  }
   _error = _desired_current - _current;
   _sum_error += _error;
   _sum_error = constrain(_sum_error, -100, 100);
