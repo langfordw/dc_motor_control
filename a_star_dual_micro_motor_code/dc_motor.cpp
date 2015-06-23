@@ -28,8 +28,8 @@ DCMotor::DCMotor(byte dir_pin1, byte dir_pin2, byte pwm_pin, byte current_sense_
   _counts_per_revolution = counts_per_revolution;
   
   _current = 0;
-  _current_sensitivity = 0.03491; //A / ADC Val  //140mV/A
-  _desired_current = int(0.8/_current_sensitivity);
+  _current_sensitivity = 0.009775; //A / ADC Val  //140mV/A
+  _desired_current = int(0.5/_current_sensitivity);
   
   _currentFilter = new LPFilter();
   _f_cs_smoothing = 2.5; //Hz
@@ -80,7 +80,7 @@ void DCMotor::init()
 
 void DCMotor::setCurrentLimit(float current_limit)
 {
-  _current_limit = current_limit;
+  _current_limit = current_limit/_current_sensitivity;
 }
 
 void DCMotor::setPWMLimit(int max_pwm)
@@ -97,12 +97,17 @@ void DCMotor::setPIDGains(float p, float i, float d)
 
 float DCMotor::_measureCurrent() 
 {
-  return analogRead(_current_sense_pin)*_current_sensitivity; 
+  return _currentFilter->step(analogRead(_current_sense_pin)); 
 }
 
 long DCMotor::getPosition()
 {
   return _position;
+}
+
+float DCMotor::getCurrent()
+{
+  return _measureCurrent();
 }
 
 int DCMotor::measureForce()
@@ -114,7 +119,8 @@ void DCMotor::update()
 {
 //  this->_velocityControl();
 //  this->_positionControl();
-  this->_forceControl();
+//  this->_forceControl();
+  this->_currentControl();
 }
 
 void DCMotor::_velocityControl()
@@ -161,6 +167,20 @@ void DCMotor::_forceControl()
   drive(pwr);
 }
 
+void DCMotor::_currentControl()
+{
+  _current = _measureCurrent();
+  _error = _desired_current - _current;
+  _sum_error += _error;
+  _sum_error = constrain(_sum_error, -100, 100);
+  int pwr = int(_k_p * _error);
+  Serial.print(", ");
+  Serial.print(_error);
+  Serial.print(", ");
+  Serial.print(pwr);
+  drive(pwr);
+}
+
 void DCMotor::setDesiredVelocity(float desired_velocity) 
 {
   _desired_velocity = desired_velocity;
@@ -176,6 +196,10 @@ void DCMotor::setDesiredForce(int desired_force)
   _desired_force = desired_force;
 }
 
+void DCMotor::setDesiredCurrent(float desired_current)
+{
+  _desired_current = int(desired_current/_current_sensitivity);
+}
 
 void DCMotor::setPolarity(int8_t polarity)
 {
@@ -249,27 +273,8 @@ float DCMotor::calculateVelocity()
 
 void DCMotor::interruptRoutineA()
 {
-  if (PIND & (1 << PORTD0)) {
-    if (!(PIND & (1 << PORTD1))) { 
-      _position++;
-     _dir = 1; 
-    } 
-    else { 
-      _position--; 
-      _dir = -1;
-    }
-  } else {
-    if (!(PIND & (1 << PORTD1))) { 
-      _position--; 
-      _dir = -1;
-    } 
-    else { 
-      _position++; 
-      _dir = 1;
-    }
-  }
-//  if (digitalRead(_encA_pin)) {
-//    if (!digitalRead(_encB_pin)) { 
+//  if (PIND & (1 << PORTD0)) {
+//    if (!(PIND & (1 << PORTD1))) { 
 //      _position++;
 //     _dir = 1; 
 //    } 
@@ -278,7 +283,7 @@ void DCMotor::interruptRoutineA()
 //      _dir = -1;
 //    }
 //  } else {
-//    if (!digitalRead(_encB_pin)) { 
+//    if (!(PIND & (1 << PORTD1))) { 
 //      _position--; 
 //      _dir = -1;
 //    } 
@@ -287,6 +292,25 @@ void DCMotor::interruptRoutineA()
 //      _dir = 1;
 //    }
 //  }
+  if (digitalRead(_encA_pin)) {
+    if (!digitalRead(_encB_pin)) { 
+      _position++;
+     _dir = 1; 
+    } 
+    else { 
+      _position--; 
+      _dir = -1;
+    }
+  } else {
+    if (!digitalRead(_encB_pin)) { 
+      _position--; 
+      _dir = -1;
+    } 
+    else { 
+      _position++; 
+      _dir = 1;
+    }
+  }
   
   _last_t_enc_triggered = _t_enc_triggered;
   _t_enc_triggered = micros();

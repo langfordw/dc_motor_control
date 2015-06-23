@@ -36,7 +36,9 @@ class DCMotor
     void setDesiredVelocity(float desired_velocity);
     void setDesiredPosition(long desired_position);
     void setDesiredForce(int desired_force);
+    void setDesiredCurrent(float desired_current);
     long getPosition();
+    float getCurrent();
     int measureForce();
   private:
     byte _dir_pin1, _dir_pin2, _pwm_pin, _current_sense_pin, _encA_pin, _encB_pin, _force_sense_pin;
@@ -45,9 +47,9 @@ class DCMotor
     long _desired_position;
     int _desired_force;
     float _velocity, _desired_velocity;
-    float _current, _current_limit, _current_sensitivity;
-    void _velocityControl(), _positionControl(), _forceControl();
-    float _desired_current;
+    int _current, _current_limit, _desired_current; // current values are in analog read integers
+    float _current_sensitivity;
+    void _velocityControl(), _positionControl(), _forceControl(), _currentControl();
     unsigned volatile long _t_enc_triggered;
     int _max_pwm;
     long _delta_T, _last_t_enc_triggered;
