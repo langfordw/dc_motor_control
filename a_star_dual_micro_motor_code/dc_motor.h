@@ -32,6 +32,7 @@ class DCMotor
     void interruptRoutineA();
     void interruptRoutineB();
     void setPolarity(int8_t polarity);
+    void setEncPolarity(int8_t enc_polarity);
     void setPIDGains(float p, float i, float d);
     void setDesiredVelocity(float desired_velocity);
     void setDesiredPosition(long desired_position);
@@ -59,7 +60,7 @@ class DCMotor
     LPFilter *_currentFilter, *_pwmFilter, *_velocityFilter;
     float _f_cs_smoothing, _f_pwm_smoothing, _f_vel_smoothing;
     int8_t _sgn(int val);
-    int8_t _polarity;
+    int8_t _polarity, _enc_polarity;
     float _k_p, _k_i, _k_d;
     float _error, _sum_error, _last_error, _delta_error;
     volatile boolean _enc_trig_flag;

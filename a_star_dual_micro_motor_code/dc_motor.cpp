@@ -41,6 +41,7 @@ DCMotor::DCMotor(byte dir_pin1, byte dir_pin2, byte pwm_pin, byte current_sense_
   _f_vel_smoothing = 10; //Hz
   
   _polarity = 0;
+  _enc_polarity = 1;
   
   // velocity control gains
 //  _k_p = 1.2;
@@ -237,6 +238,11 @@ void DCMotor::setPolarity(int8_t polarity)
   _polarity = polarity;
 }
 
+void DCMotor::setEncPolarity(int8_t enc_polarity)
+{
+  _enc_polarity = enc_polarity;
+}
+
 void DCMotor::setZero()
 {
   _position = 0;
@@ -328,23 +334,45 @@ void DCMotor::interruptRoutineA()
 //      _dir = 1;
 //    }
 //  }
-  if (digitalRead(_encA_pin)) {
-    if (!digitalRead(_encB_pin)) { 
-      _position++;
-     _dir = 1; 
-    } 
-    else { 
-      _position--; 
-      _dir = -1;
+  if (_enc_polarity) {
+    if (digitalRead(_encA_pin)) {
+      if (!digitalRead(_encB_pin)) { 
+        _position++;
+       _dir = 1; 
+      } 
+      else { 
+        _position--; 
+        _dir = -1;
+      }
+    } else {
+      if (!digitalRead(_encB_pin)) { 
+        _position--; 
+        _dir = -1;
+      } 
+      else { 
+        _position++; 
+        _dir = 1;
+      }
     }
   } else {
-    if (!digitalRead(_encB_pin)) { 
-      _position--; 
-      _dir = -1;
-    } 
-    else { 
-      _position++; 
-      _dir = 1;
+    if (digitalRead(_encA_pin)) {
+      if (!digitalRead(_encB_pin)) { 
+        _position--;
+       _dir = 1; 
+      } 
+      else { 
+        _position++; 
+        _dir = -1;
+      }
+    } else {
+      if (!digitalRead(_encB_pin)) { 
+        _position++; 
+        _dir = -1;
+      } 
+      else { 
+        _position--; 
+        _dir = 1;
+      }
     }
   }
   
