@@ -65,22 +65,19 @@ void Stapler::update()
     if (_state == _startup) {
        if ((millis() - _tstart) > 1000) {
           _motor->setZero(); 
-          _state = _off;
-          Serial.println("OFF");
+          this->off();
         }
     }
     else if (_state == _up) {
        this->moveFromAtoB(_motor->getPosition(),2000,_tstart,_tstart+2000);
        if ((millis() - _tstart) > 2000) {
-          _state = _off;
-          Serial.println("OFF");
+          this->off();
         }
     }
     else if (_state == _down) {
        this->moveFromAtoB(_motor->getPosition(),0,_tstart,_tstart+2000);
        if ((millis() - _tstart) > 2000) {
-          _state = _off;
-          Serial.println("OFF");
+          this->up();
         }
     }
   }

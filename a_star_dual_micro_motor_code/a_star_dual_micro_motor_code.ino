@@ -23,9 +23,12 @@ const byte up = 2;
 const byte down = 3;
 const byte off = 0;
 
-byte activate_pin1 = 7;
-byte activate_pin2 = 8;
-byte led_pin = 13;
+const byte activate_pin1 = 7;
+const byte activate_pin2 = 8;
+const byte led_pin = 13;
+
+boolean which_stapler;
+boolean trig_stapler = 0, last_trig_stapler;
 
 long tstart = 0;
 
@@ -37,6 +40,9 @@ void setup() {
   attachInterrupt(encA1_int, encA1trig, CHANGE);
   attachInterrupt(encA2_int, encA2trig, CHANGE);
   
+  pinMode(activate_pin1, INPUT);
+  pinMode(activate_pin2, INPUT);
+  
   motor1->init();
   motor1->setCurrentLimit(0.1); // amps
   motor1->setPWMLimit(150); // given nominal 6v motor with 6V power supply
@@ -47,9 +53,18 @@ void setup() {
   motor2->setPWMLimit(150); // given nominal 6v motor with 6V power supply
   motor2->setPolarity(0);
   motor2->setEncPolarity(0);
+  
+  stapler1->startup();
+  stapler2->startup();
 }
 
 void loop() {
+  
+//  TO DO:
+//    trigger from digital input pins
+//    auto-switch states (rather than timeout)
+//    
+  
   if (Serial.available() > 0) {
     byte inByte = Serial.read();
     if (inByte == 'q') {
@@ -70,6 +85,21 @@ void loop() {
       stapler2->startup();
     } else if (inByte == 'x') {
       stapler2->off();
+    }
+  }
+  
+  which_stapler = digitalRead(activate_pin2);
+  last_trig_stapler = trig_stapler;
+  trig_stapler = digitalRead(activate_pin1);
+  
+  if (trig_stapler != last_trig_stapler && trig_stapler) {
+    Serial.println("triggered!");
+    if (which_stapler) {
+      stapler1->down();
+      Serial.println("stapler 1");
+    } else {
+      stapler2->down();
+      Serial.println("stapler 2");
     }
   }
   
