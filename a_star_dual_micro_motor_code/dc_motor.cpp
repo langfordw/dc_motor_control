@@ -175,9 +175,11 @@ void DCMotor::_positionControl()
   _sum_error += _error;
   _sum_error = constrain(_sum_error, -1000, 1000);
   int pwr = _pwmFilter->step(int(_k_p * _error + _k_i * _sum_error + _k_d * _delta_error));
-  Serial.print(_position);
-  Serial.print(", ");
-  Serial.print(pwr);
+//  Serial.print(_position);
+//  Serial.print(", ");
+//  Serial.print(_desired_position);
+//  Serial.print(", ");
+//  Serial.print(pwr);
   drive(pwr);
 }
 

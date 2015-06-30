@@ -1,7 +1,7 @@
 #include "stapler.h"
 #include <avr/io.h>
 
-Stapler::Stapler(DCMotor **motor)
+Stapler::Stapler(DCMotor **motor, int encoder_counts_per_stroke)
 {
   _motor = *motor;
   
@@ -10,8 +10,9 @@ Stapler::Stapler(DCMotor **motor)
   _down = 2;
   _startup = 3;
   
-  _state = _off;
+  _encoder_counts_per_stroke = encoder_counts_per_stroke;
   
+  _state = _off;
 }
 
 void Stapler::startup()
@@ -26,7 +27,7 @@ void Stapler::startup()
 
 void Stapler::up()
 {
-  _motor->setPIDGains(2.0,0.03,0); // position control
+  _motor->setPIDGains(1.5,0.01,0); // position control
   _motor->setControlType(1);
   _tstart = millis();
   _state = _up;
@@ -48,9 +49,21 @@ void Stapler::off()
   Serial.println("OFF");
 }
 
+//void Stapler::moveFromAtoB(long a, long b, long tstart, long tend) {
+//  float alpha = float((millis()-tstart))/float((tend-tstart)); // 0 --> 1
+//  int pos = alpha*b + (1-alpha)*a; //a --> b
+//  _motor->setDesiredPosition(pos);
+//}
+
 void Stapler::moveFromAtoB(long a, long b, long tstart, long tend) {
-  float alpha = float((millis()-tstart))/float((tend-tstart)); // 0 --> 1
-  int pos = alpha*b + (1-alpha)*a; //a --> b
+  float alpha = float((millis()-tstart))/float((tend-tstart))*1.571; // 0 --> pi/2
+  int dx = b-a;
+  int pos = a + float(0.5*(1.0-float(cos(2.0*alpha)))*float(dx)); //a --> b using sin^2(t)
+  Serial.print(_tstart);
+  Serial.print(", ");
+  Serial.print(millis());
+  Serial.print(", ");
+  Serial.print(pos);
   _motor->setDesiredPosition(pos);
 }
 
@@ -69,20 +82,24 @@ void Stapler::update()
         }
     }
     else if (_state == _up) {
-       this->moveFromAtoB(_motor->getPosition(),2000,_tstart,_tstart+2000);
-       if ((millis() - _tstart) > 2000) {
+       this->moveFromAtoB(_motor->getPosition(),_encoder_counts_per_stroke,_tstart,_tstart+750);
+       if ((millis() - _tstart) > 750) {
           this->off();
         }
     }
     else if (_state == _down) {
-       this->moveFromAtoB(_motor->getPosition(),0,_tstart,_tstart+2000);
-       if ((millis() - _tstart) > 2000) {
+       this->moveFromAtoB(_motor->getPosition(),0,_tstart,_tstart+750);
+       if ((millis() - _tstart) > 750) {
           this->up();
         }
     }
   }
 }
-  
+
+int Stapler::getState()
+{
+  return _state;
+}
 
 //void Stapler::attachMotor(DCMotor *motor)
 //{

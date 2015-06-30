@@ -14,8 +14,10 @@ DCMotor *motor2 = new DCMotor(4, 12, 9, A0, 1, 0, 10);
 // Drive values < 0 --> piston moves down, encoder decrements
 // Drive values > 0 --> piston moves up, encoder increments
 
-Stapler *stapler1 = new Stapler(&motor1);
-Stapler *stapler2 = new Stapler(&motor2);
+// stapler 1 is left
+// stapler 2 is right
+Stapler *stapler1 = new Stapler(&motor1, 2800);
+Stapler *stapler2 = new Stapler(&motor2, 1900);
 
 byte state = 0;
 const byte startup = 1;
@@ -29,6 +31,7 @@ const byte led_pin = 13;
 
 boolean which_stapler;
 boolean trig_stapler = 0, last_trig_stapler;
+boolean not_triggered = true;
 
 long tstart = 0;
 
@@ -89,11 +92,12 @@ void loop() {
   }
   
   which_stapler = digitalRead(activate_pin2);
-  last_trig_stapler = trig_stapler;
+//  last_trig_stapler = trig_stapler;
   trig_stapler = digitalRead(activate_pin1);
   
-  if (trig_stapler != last_trig_stapler && trig_stapler) {
+  if (trig_stapler && not_triggered) {
     Serial.println("triggered!");
+    not_triggered = false;
     if (which_stapler) {
       stapler1->down();
       Serial.println("stapler 1");
@@ -105,6 +109,7 @@ void loop() {
   
   stapler1->update();
   stapler2->update();
+  if ((stapler2->getState() == 0) && (stapler1->getState() == 0)) { not_triggered = true; }
 }
 
 void encA1trig() {
