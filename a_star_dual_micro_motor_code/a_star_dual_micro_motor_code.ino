@@ -8,15 +8,15 @@
 #define encB2_int 3
 
 // 11 and 12 are dummy pins that aren't actually used
-DCMotor *motor1 = new DCMotor(5, 11, 10, A1, 3, 2, 10); //dir_pin1, dir_pin2, pwm_pin, current_sense_pin, encA_pin, encB_pin, counts_per_revolution
-DCMotor *motor2 = new DCMotor(4, 12, 9, A0, 1, 0, 10);
+DCMotor *motor1 = new DCMotor(5, 11, 10, A1, 3, 2, 6); //dir_pin1, dir_pin2, pwm_pin, current_sense_pin, encA_pin, encB_pin, counts_per_revolution
+DCMotor *motor2 = new DCMotor(4, 12, 9, A0, 1, 0, 6);
 // CW = NEGATIVE
 // Drive values < 0 --> piston moves down, encoder decrements
 // Drive values > 0 --> piston moves up, encoder increments
 
 // stapler 1 is left
 // stapler 2 is right
-Stapler *stapler1 = new Stapler(&motor1, 2800);
+Stapler *stapler1 = new Stapler(&motor1, 1800);
 Stapler *stapler2 = new Stapler(&motor2, 1900);
 
 byte state = 0;
@@ -49,24 +49,20 @@ void setup() {
   motor1->init();
   motor1->setCurrentLimit(0.1); // amps
   motor1->setPWMLimit(150); // given nominal 6v motor with 6V power supply
-  motor1->setPolarity(0);
+  motor1->setPolarity(1);
+  motor1->setEncPolarity(0);
   
   motor2->init();
   motor2->setCurrentLimit(0.1); // amps
   motor2->setPWMLimit(150); // given nominal 6v motor with 6V power supply
-  motor2->setPolarity(0);
-  motor2->setEncPolarity(0);
+  motor2->setPolarity(1);
+  motor2->setEncPolarity(1);
   
   stapler1->startup();
   stapler2->startup();
 }
 
 void loop() {
-  
-//  TO DO:
-//    trigger from digital input pins
-//    auto-switch states (rather than timeout)
-//    
   
   if (Serial.available() > 0) {
     byte inByte = Serial.read();
@@ -92,7 +88,6 @@ void loop() {
   }
   
   which_stapler = digitalRead(activate_pin2);
-//  last_trig_stapler = trig_stapler;
   trig_stapler = digitalRead(activate_pin1);
   
   if (trig_stapler && not_triggered) {

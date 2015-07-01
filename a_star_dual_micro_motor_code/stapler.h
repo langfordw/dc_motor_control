@@ -12,14 +12,17 @@ class Stapler
     void up();
     void down();
     void off();
+    void push();
     void update();
-    void moveFromAtoB(long a, long b, long tstart, long tend);
+    void moveFromAtoB(int a, int b, long tstart, long tend);
     int getState();
   private:
     DCMotor *_motor;
-    byte _state, _off, _up, _down, _startup;
+    byte _state, _off, _up, _down, _startup, _push;
     long _tstart;
     int _encoder_counts_per_stroke;
+    int _dt_down, _dt_up;
+    int _start_pos;
 };
 
 #endif
