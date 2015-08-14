@@ -23,6 +23,7 @@ class Stapler
     int _encoder_counts_per_stroke;
     int _dt_down, _dt_up;
     int _start_pos;
+    int _delPos;
 };
 
 #endif

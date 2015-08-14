@@ -16,8 +16,11 @@ DCMotor *motor2 = new DCMotor(4, 12, 9, A0, 1, 0, 6);
 
 // stapler 1 is left
 // stapler 2 is right
-Stapler *stapler1 = new Stapler(&motor1, 1800);
-Stapler *stapler2 = new Stapler(&motor2, 1900);
+//Stapler *stapler1 = new Stapler(&motor1, 1725);
+//Stapler *stapler2 = new Stapler(&motor2, 1700);
+Stapler *stapler1 = new Stapler(&motor1, 1850);
+Stapler *stapler2 = new Stapler(&motor2, 1700);
+
 
 byte state = 0;
 const byte startup = 1;

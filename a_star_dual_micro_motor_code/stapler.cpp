@@ -17,6 +17,8 @@ Stapler::Stapler(DCMotor **motor, int encoder_counts_per_stroke)
   _encoder_counts_per_stroke = encoder_counts_per_stroke;
   
   _state = _off;
+  
+  _delPos = 0;
 }
 
 void Stapler::startup()
@@ -65,6 +67,8 @@ void Stapler::off()
 {
   _state = _off;
   Serial.println("OFF");
+  Serial.print("Change in position: ");
+  Serial.println(_delPos);
 }
 
 //void Stapler::moveFromAtoB(int a, int b, long tstart, long tend) {
@@ -132,8 +136,11 @@ void Stapler::update()
     }
     else if (_state == _push) {
       if ((millis() - _tstart) > 250) {
-          _motor->setZero(); 
-          Serial.println("re-zero'd");
+          
+          
+//          Serial.println(_motor->getPosition());
+//          _motor->setZero(); 
+//          Serial.println("re-zero'd");
           this->up();
         }
     }
@@ -144,9 +151,11 @@ void Stapler::update()
         }
     }
     else if (_state == _down) {
-       this->moveFromAtoB(_start_pos,50,_tstart,_tstart+_dt_down);
+       this->moveFromAtoB(_start_pos,100,_tstart,_tstart+_dt_down);
        if ((millis() - _tstart) > _dt_down) {
-          this->push();
+//          this->push();
+            _delPos = _motor->getPosition();
+            this->up();
         }
     }
   }
